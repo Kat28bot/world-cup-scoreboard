@@ -17,14 +17,8 @@ public class ScoreBoardFacade {
         this.scoreBoard = scoreBoard;
     }
 
-    // -------------------------
-    // Use Cases
-    // -------------------------
-
     public void startGame(String homeName, String awayName) {
-        Team home = new Team(homeName);
-        Team away = new Team(awayName);
-        scoreBoard.startGame(home, away);
+        scoreBoard.startGame(new Team(homeName), new Team(awayName));
     }
 
     public void updateScore(String homeName,
@@ -32,13 +26,19 @@ public class ScoreBoardFacade {
                             int homeScore,
                             int awayScore) {
 
-        Game game = getExistingGame(homeName, awayName);
-        scoreBoard.updateScore(game, homeScore, awayScore);
+        scoreBoard.updateScore(
+                new Team(homeName),
+                new Team(awayName),
+                homeScore,
+                awayScore
+        );
     }
 
     public void finishGame(String homeName, String awayName) {
-        Game game = getExistingGame(homeName, awayName);
-        scoreBoard.finishGame(game);
+        scoreBoard.finishGame(
+                new Team(homeName),
+                new Team(awayName)
+        );
     }
 
     public List<GameView> getSummary() {
@@ -46,20 +46,6 @@ public class ScoreBoardFacade {
                 .stream()
                 .map(this::toView)
                 .toList();
-    }
-
-    // -------------------------
-    // Internal helpers
-    // -------------------------
-
-    private Game getExistingGame(String homeName, String awayName) {
-
-        Team home = new Team(homeName);
-        Team away = new Team(awayName);
-
-        return scoreBoard.findGame(home, away)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Game not found"));
     }
 
     private GameView toView(Game game) {
@@ -70,10 +56,6 @@ public class ScoreBoardFacade {
                 game.getScore().getAway()
         );
     }
-
-    // -------------------------
-    // View Projection
-    // -------------------------
 
     public record GameView(
             String homeTeam,

@@ -36,42 +36,57 @@ class ScoreBoardTest {
     @Test
     void shouldNotStartGameIfTeamAlreadyPlaying() {
         scoreBoard.startGame(brazil, argentina);
-        assertThrows(IllegalArgumentException.class, () -> scoreBoard.startGame(brazil, germany));
-        assertThrows(IllegalArgumentException.class, () -> scoreBoard.startGame(germany, argentina));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                scoreBoard.startGame(brazil, germany));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                scoreBoard.startGame(germany, argentina));
     }
 
     @Test
     void shouldFinishGame() {
-        Game game = scoreBoard.startGame(brazil, argentina);
-        scoreBoard.finishGame(game);
+        scoreBoard.startGame(brazil, argentina);
+        scoreBoard.finishGame(brazil, argentina);
         assertTrue(scoreBoard.getSummary().isEmpty());
     }
 
     @Test
     void shouldUpdateScore() {
-        Game game = scoreBoard.startGame(brazil, argentina);
-        scoreBoard.updateScore(game, 2, 3);
-        assertEquals(2, game.getScore().getHome());
-        assertEquals(3, game.getScore().getAway());
+        scoreBoard.startGame(brazil, argentina);
+        scoreBoard.updateScore(brazil, argentina, 2, 3);
+
+        Game game = scoreBoard.startGame(new Team("Dummy1"), new Team("Dummy2")); // dummy to fetch summary
+        // Fetch the game from summary
+        Game fetched = scoreBoard.getSummary().stream()
+                .filter(g -> g.getHomeTeam().equals(brazil) && g.getAwayTeam().equals(argentina))
+                .findFirst().orElseThrow();
+        assertEquals(2, fetched.getScore().getHome());
+        assertEquals(3, fetched.getScore().getAway());
     }
 
     @Test
     void shouldThrowWhenUpdatingScoreWithNegatives() {
-        Game game = scoreBoard.startGame(brazil, argentina);
-        assertThrows(IllegalArgumentException.class, () -> scoreBoard.updateScore(game, -1, 0));
-        assertThrows(IllegalArgumentException.class, () -> scoreBoard.updateScore(game, 0, -2));
+        scoreBoard.startGame(brazil, argentina);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                scoreBoard.updateScore(brazil, argentina, -1, 0));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                scoreBoard.updateScore(brazil, argentina, 0, -2));
     }
 
     @Test
     void shouldReturnSummaryOrderedByTotalScoreAndMostRecent() {
         Game game1 = scoreBoard.startGame(brazil, argentina);
-        scoreBoard.updateScore(game1, 2, 2); // total 4
+        scoreBoard.updateScore(brazil, argentina, 2, 2); // total 4
 
-        Game game2 = scoreBoard.startGame(germany, new Team("France"));
-        scoreBoard.updateScore(game2, 3, 2); // total 5
+        Team france = new Team("France");
+        Game game2 = scoreBoard.startGame(germany, france);
+        scoreBoard.updateScore(germany, france, 3, 2); // total 5
 
         Game game3 = scoreBoard.startGame(new Team("Spain"), new Team("Italy"));
-        scoreBoard.updateScore(game3, 1, 1); // total 2
+        scoreBoard.updateScore(new Team("Spain"), new Team("Italy"), 1, 1); // total 2
 
         List<Game> summary = scoreBoard.getSummary();
 
