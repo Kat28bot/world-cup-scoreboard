@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,8 +28,9 @@ class ScoreBoardTest {
 
     @Test
     void shouldStartGame() {
-        Game game = scoreBoard.startGame(brazil, argentina);
-        assertNotNull(game);
+        Optional<Game> maybeGame = scoreBoard.startGame(brazil, argentina);
+        assertTrue(maybeGame.isPresent());
+        Game game = maybeGame.get();
         assertEquals(0, game.getScore().getHome());
         assertEquals(0, game.getScore().getAway());
     }
@@ -37,11 +39,18 @@ class ScoreBoardTest {
     void shouldNotStartGameIfTeamAlreadyPlaying() {
         scoreBoard.startGame(brazil, argentina);
 
-        assertThrows(IllegalArgumentException.class, () ->
-                scoreBoard.startGame(brazil, germany));
+        // Attempt to start game with a team already playing
+        Optional<Game> game1 = scoreBoard.startGame(brazil, germany);
+        assertTrue(game1.isEmpty());
 
-        assertThrows(IllegalArgumentException.class, () ->
-                scoreBoard.startGame(germany, argentina));
+        Optional<Game> game2 = scoreBoard.startGame(germany, argentina);
+        assertTrue(game2.isEmpty());
+    }
+
+    @Test
+    void shouldNotStartGameWithSameTeam() {
+        Optional<Game> game = scoreBoard.startGame(brazil, brazil);
+        assertTrue(game.isEmpty());
     }
 
     @Test
@@ -56,7 +65,6 @@ class ScoreBoardTest {
         scoreBoard.startGame(brazil, argentina);
         scoreBoard.updateScore(brazil, argentina, 2, 3);
 
-        Game game = scoreBoard.startGame(new Team("Dummy1"), new Team("Dummy2")); // dummy to fetch summary
         // Fetch the game from summary
         Game fetched = scoreBoard.getSummary().stream()
                 .filter(g -> g.getHomeTeam().equals(brazil) && g.getAwayTeam().equals(argentina))
@@ -78,14 +86,17 @@ class ScoreBoardTest {
 
     @Test
     void shouldReturnSummaryOrderedByTotalScoreAndMostRecent() {
-        Game game1 = scoreBoard.startGame(brazil, argentina);
+        Optional<Game> maybeGame1 = scoreBoard.startGame(brazil, argentina);
+        Game game1 = maybeGame1.get();
         scoreBoard.updateScore(brazil, argentina, 2, 2); // total 4
 
         Team france = new Team("France");
-        Game game2 = scoreBoard.startGame(germany, france);
+        Optional<Game> maybeGame2 = scoreBoard.startGame(germany, france);
+        Game game2 = maybeGame2.get();
         scoreBoard.updateScore(germany, france, 3, 2); // total 5
 
-        Game game3 = scoreBoard.startGame(new Team("Spain"), new Team("Italy"));
+        Optional<Game> maybeGame3 = scoreBoard.startGame(new Team("Spain"), new Team("Italy"));
+        Game game3 = maybeGame3.get();
         scoreBoard.updateScore(new Team("Spain"), new Team("Italy"), 1, 1); // total 2
 
         List<Game> summary = scoreBoard.getSummary();

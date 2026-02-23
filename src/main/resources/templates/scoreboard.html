@@ -8,6 +8,10 @@
 <h1>Live Football World Cup Scoreboard</h1>
 
 <h2>Start Game</h2>
+
+<!-- Fallback message for invalid start -->
+<div style="color:red" th:if="${startError}" th:text="${startError}"></div>
+
 <form action="/start" method="post">
     <input type="text" name="homeTeam" placeholder="Home Team" required/>
     <input type="text" name="awayTeam" placeholder="Away Team" required/>

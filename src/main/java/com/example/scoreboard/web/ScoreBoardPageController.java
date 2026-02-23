@@ -4,6 +4,7 @@ import com.example.scoreboard.application.ScoreBoardFacade;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class ScoreBoardPageController {
@@ -15,17 +16,27 @@ public class ScoreBoardPageController {
     }
 
     @GetMapping("/")
-    public String view(Model model) {
+    public String view(Model model,
+                       @ModelAttribute("startError") String startError) {
         model.addAttribute("games", facade.getSummary());
+        model.addAttribute("startError", startError); // display fallback message if any
         return "scoreboard";
     }
 
     @PostMapping("/start")
     public String start(@RequestParam String homeTeam,
-                        @RequestParam String awayTeam) {
-        facade.startGame(homeTeam, awayTeam);
+                        @RequestParam String awayTeam,
+                        RedirectAttributes redirect) {
+
+        ScoreBoardFacade.StartGameResult result = facade.startGame(homeTeam, awayTeam);
+
+        if (!result.success()) {
+            redirect.addFlashAttribute("startError", result.message());
+        }
+
         return "redirect:/";
     }
+
 
     @PostMapping("/update")
     public String update(@RequestParam String homeTeam,

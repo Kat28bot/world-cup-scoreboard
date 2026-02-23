@@ -1,11 +1,17 @@
 package com.example.scoreboard.domain;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 public class ScoreBoard {
+    private static final Logger log = LoggerFactory.getLogger(ScoreBoard.class);
 
     private final ConcurrentHashMap<GameKey, Game> games = new ConcurrentHashMap<>();
     private final AtomicLong sequence = new AtomicLong(0);
@@ -14,24 +20,23 @@ public class ScoreBoard {
     // Start Game
     // ------------------------
 
-    public Game startGame(Team home, Team away) {
+    public Optional<Game> startGame(Team home, Team away) {
 
         if (home.equals(away)) {
-            throw new IllegalArgumentException("Teams cannot be the same");
+            log.warn("Teams cannot be the same");
+            return Optional.empty();
         }
 
         // Ensure teams are not already playing
-        if (isTeamPlaying(home) || isTeamPlaying(away)) {
-            throw new IllegalArgumentException("One of the teams is already playing");
-        }
+        if (Stream.of(home, away).anyMatch(this::isTeamPlaying)) return Optional.empty();
 
         long order = sequence.incrementAndGet();
         Game game = new Game(home, away, order);
-
         GameKey key = new GameKey(home, away);
         games.put(key, game);
 
-        return game;
+        log.info("Game started: {} vs {}", home.getName(), away.getName());
+        return Optional.of(game);
     }
 
     // ------------------------
@@ -41,7 +46,9 @@ public class ScoreBoard {
     public void updateScore(Team home, Team away, int homeScore, int awayScore) {
 
         Game game = getExistingGame(home, away);
-        game.updateScore(homeScore, awayScore);
+        if (game != null) {
+            game.updateScore(homeScore, awayScore);
+        }
     }
 
     // ------------------------
@@ -54,7 +61,7 @@ public class ScoreBoard {
         Game removed = games.remove(key);
 
         if (removed == null) {
-            throw new IllegalArgumentException("Game not found");
+           log.warn("Game not found: {} vs {}", home.getName(), away.getName());
         }
     }
 
@@ -83,7 +90,7 @@ public class ScoreBoard {
         Game game = games.get(new GameKey(home, away));
 
         if (game == null) {
-            throw new IllegalArgumentException("Game not found");
+            log.warn("Attempted to update score for a non-existent game: {} vs {}", home.getName(), away.getName());
         }
 
         return game;

@@ -6,6 +6,7 @@ import com.example.scoreboard.domain.Team;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -17,8 +18,28 @@ public class ScoreBoardFacade {
         this.scoreBoard = scoreBoard;
     }
 
-    public void startGame(String homeName, String awayName) {
-        scoreBoard.startGame(new Team(homeName), new Team(awayName));
+    public StartGameResult startGame(String homeName, String awayName) {
+        Team home = new Team(homeName);
+        Team away = new Team(awayName);
+
+        Optional<Game> maybeGame = scoreBoard.startGame(home, away);
+
+        if (maybeGame.isPresent()) {
+            return new StartGameResult(true, null);
+        }
+
+        // Determine why start failed
+        if (home.equals(away)) {
+            return new StartGameResult(false, "Home and Away teams cannot be the same");
+        }
+        if (isTeamPlaying(home)) {
+            return new StartGameResult(false, homeName + " is already playing another game");
+        }
+        if (isTeamPlaying(away)) {
+            return new StartGameResult(false, awayName + " is already playing another game");
+        }
+
+        return new StartGameResult(false, "Cannot start game");
     }
 
     public void updateScore(String homeName,
@@ -56,6 +77,13 @@ public class ScoreBoardFacade {
                 game.getScore().getAway()
         );
     }
+
+    private boolean isTeamPlaying(Team team) {
+        return scoreBoard.getSummary().stream()
+                .anyMatch(g -> g.getHomeTeam().equals(team) || g.getAwayTeam().equals(team));
+    }
+
+    public record StartGameResult(boolean success, String message) {}
 
     public record GameView(
             String homeTeam,
