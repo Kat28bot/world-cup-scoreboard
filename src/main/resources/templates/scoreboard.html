@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>World Cup Scoreboard</title>
+</head>
+<body>
+
+<h1>Live Football World Cup Scoreboard</h1>
+
+<h2>Start Game</h2>
+<form action="/start" method="post">
+    <input type="text" name="homeTeam" placeholder="Home Team" required/>
+    <input type="text" name="awayTeam" placeholder="Away Team" required/>
+    <button type="submit">Start</button>
+</form>
+
+<h2>Update Score</h2>
+<form action="/update" method="post">
+    <input type="text" name="homeTeam" placeholder="Home Team" required/>
+    <input type="text" name="awayTeam" placeholder="Away Team" required/>
+    <input type="number" name="homeScore" min="0" required/>
+    <input type="number" name="awayScore" min="0" required/>
+    <button type="submit">Update</button>
+</form>
+
+<h2>Current Games (Sorted)</h2>
+
+<table border="1">
+    <tr>
+        <th>Home</th>
+        <th>Away</th>
+        <th>Score</th>
+        <th>Action</th>
+    </tr>
+
+    <tr th:each="game : ${games}">
+        <td th:text="${game.homeTeam}"></td>
+        <td th:text="${game.awayTeam}"></td>
+        <td th:text="${game.homeScore} + ' - ' + ${game.awayScore}"></td>
+        <td>
+            <form action="/finish" method="post">
+                <input type="hidden" name="homeTeam" th:value="${game.homeTeam}"/>
+                <input type="hidden" name="awayTeam" th:value="${game.awayTeam}"/>
+                <button type="submit">Finish</button>
+            </form>
+        </td>
+    </tr>
+
+</table>
+
+</body>
+</html>

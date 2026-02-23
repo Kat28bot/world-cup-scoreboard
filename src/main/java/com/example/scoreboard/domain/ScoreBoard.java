@@ -1,18 +1,13 @@
-package com.example.scoreboard.service;
-
-import com.example.scoreboard.domain.Game;
-import com.example.scoreboard.domain.Score;
-import com.example.scoreboard.domain.Team;
+package com.example.scoreboard.domain;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class ScoreBoard {
 
     private final List<Game> games = new ArrayList<>();
     private long sequence = 0;
 
-    public Game startGame(Team home, Team away) {
+    public synchronized  Game startGame(Team home, Team away) {
         Objects.requireNonNull(home, "Home team cannot be null");
         Objects.requireNonNull(away, "Away team cannot be null");
 
@@ -29,20 +24,20 @@ public class ScoreBoard {
         return game;
     }
 
-    public void finishGame(Game game) {
+    public synchronized  void finishGame(Game game) {
         if (!games.remove(game)) {
             throw new IllegalArgumentException("Game not found");
         }
     }
 
-    public void updateScore(Game game, int home, int away) {
+    public synchronized  void updateScore(Game game, int home, int away) {
         if (!games.contains(game)) {
             throw new IllegalArgumentException("Game not found");
         }
         game.updateScore(home, away);
     }
 
-    public List<Game> getSummary() {
+    public synchronized  List<Game> getSummary() {
         return games.stream()
                 .sorted(
                         Comparator
@@ -52,6 +47,13 @@ public class ScoreBoard {
 
                 )
                 .toList();
+    }
+    public synchronized  Optional<Game> findGame(Team home, Team away) {
+        return games.stream()
+                .filter(g ->
+                        g.getHomeTeam().equals(home) &&
+                                g.getAwayTeam().equals(away))
+                .findFirst();
     }
 
 }
