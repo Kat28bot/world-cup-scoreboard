@@ -32,10 +32,10 @@ public class ScoreBoardFacade {
             return new StartGameResult(false, "Home and Away teams cannot be the same");
         }
         if (scoreBoard.isTeamPlaying(home)) {
-            return new StartGameResult(false, homeName + " is already playing another game");
+            return new StartGameResult(false, home.getName() + " is already playing another game");
         }
         if (scoreBoard.isTeamPlaying(away)) {
-            return new StartGameResult(false, awayName + " is already playing another game");
+            return new StartGameResult(false, away.getName() + " is already playing another game");
         }
 
         return new StartGameResult(false, "Cannot start game");
