@@ -32,10 +32,10 @@ public class ScoreBoardFacade {
         if (home.equals(away)) {
             return new StartGameResult(false, "Home and Away teams cannot be the same");
         }
-        if (isTeamPlaying(home)) {
+        if (scoreBoard.isTeamPlaying(home)) {
             return new StartGameResult(false, homeName + " is already playing another game");
         }
-        if (isTeamPlaying(away)) {
+        if (scoreBoard.isTeamPlaying(away)) {
             return new StartGameResult(false, awayName + " is already playing another game");
         }
 
@@ -78,10 +78,6 @@ public class ScoreBoardFacade {
         );
     }
 
-    private boolean isTeamPlaying(Team team) {
-        return scoreBoard.getSummary().stream()
-                .anyMatch(g -> g.getHomeTeam().equals(team) || g.getAwayTeam().equals(team));
-    }
 
     public record StartGameResult(boolean success, String message) {}
 

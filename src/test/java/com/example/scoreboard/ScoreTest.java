@@ -53,4 +53,53 @@ public class ScoreTest {
         Score zero2 = new Score(0, 0);
         assertEquals(zero1, zero2);
     }
+
+    @Test
+    void hashCodeShouldMatchForEqualScores() {
+        Score s1 = new Score(1, 2);
+        Score s2 = new Score(1, 2);
+        assertEquals(s1, s2);
+        assertEquals(s1.hashCode(), s2.hashCode());
+    }
+
+    @Test
+    void hashCodeShouldDifferForNonEqualScores() {
+        Score s1 = new Score(5, 1);
+        Score s2 = new Score(1, 5);
+        assertNotEquals(s1, s2);
+        assertNotEquals(s1.hashCode(), s2.hashCode());
+    }
+
+    @Test
+    void shouldNotBeEqualToOtherObjectTypes() {
+        Score score = new Score(1, 2);
+        assertNotEquals(score, "not a score");
+    }
+
+    @Test
+    void shouldBeEqualToItself() {
+        Score score = new Score(7, 3);
+        assertEquals(score, score);
+    }
+
+    @Test
+    void shouldNotBeEqualToNull() {
+        Score score = new Score(7, 3);
+        assertNotEquals(null, score);
+    }
+
+    @Test
+    void scoreShouldBeImmutable() {
+        Score s1 = new Score(4, 4);
+        // No mutation possible, but serve as living documentation
+        assertEquals(4, s1.getHome());
+        assertEquals(4, s1.getAway());
+    }
+
+    @Test
+    void shouldAllowMaxIntScores() {
+        Score score = new Score(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        assertEquals(Integer.MAX_VALUE, score.getHome());
+        assertEquals(Integer.MAX_VALUE, score.getAway());
+    }
 }

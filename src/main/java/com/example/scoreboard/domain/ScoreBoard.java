@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
 
 public class ScoreBoard {
     private static final Logger log = LoggerFactory.getLogger(ScoreBoard.class);
@@ -20,15 +19,19 @@ public class ScoreBoard {
     // Start Game
     // ------------------------
 
-    public Optional<Game> startGame(Team home, Team away) {
+    public synchronized Optional<Game> startGame(Team home, Team away) {
 
         if (home.equals(away)) {
-            log.warn("Teams cannot be the same");
+            log.warn("Cannot start game: {} vs {} - teams cannot be the same",
+                    home.getName(), away.getName());
             return Optional.empty();
         }
 
-        // Ensure teams are not already playing
-        if (Stream.of(home, away).anyMatch(this::isTeamPlaying)) return Optional.empty();
+        if (isTeamPlaying(home) || isTeamPlaying(away)) {
+            log.warn("Cannot start game: {} vs {} - One of the teams is already playing",
+                    home.getName(), away.getName());
+            return Optional.empty();
+        }
 
         long order = sequence.incrementAndGet();
         Game game = new Game(home, away, order);
@@ -48,6 +51,8 @@ public class ScoreBoard {
         Game game = getExistingGame(home, away);
         if (game != null) {
             game.updateScore(homeScore, awayScore);
+            log.debug("Score updated: {} vs {} -> {}:{}",
+                    home.getName(), away.getName(), homeScore, awayScore);
         }
     }
 
@@ -62,6 +67,9 @@ public class ScoreBoard {
 
         if (removed == null) {
            log.warn("Game not found: {} vs {}", home.getName(), away.getName());
+        }
+        else{
+            log.info("Game finished: {} vs {}", home.getName(), away.getName());
         }
     }
 
@@ -96,7 +104,7 @@ public class ScoreBoard {
         return game;
     }
 
-    private boolean isTeamPlaying(Team team) {
+    public boolean isTeamPlaying(Team team) {
 
         return games.values().stream()
                 .anyMatch(g ->

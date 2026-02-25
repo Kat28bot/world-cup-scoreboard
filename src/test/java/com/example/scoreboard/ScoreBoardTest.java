@@ -6,8 +6,13 @@ import com.example.scoreboard.domain.Team;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,7 +70,6 @@ class ScoreBoardTest {
         scoreBoard.startGame(brazil, argentina);
         scoreBoard.updateScore(brazil, argentina, 2, 3);
 
-        // Fetch the game from summary
         Game fetched = scoreBoard.getSummary().stream()
                 .filter(g -> g.getHomeTeam().equals(brazil) && g.getAwayTeam().equals(argentina))
                 .findFirst().orElseThrow();
@@ -105,5 +109,77 @@ class ScoreBoardTest {
         assertEquals(game2, summary.get(0)); // total 5
         assertEquals(game1, summary.get(1)); // total 4
         assertEquals(game3, summary.get(2)); // total 2
+    }
+
+    @Test
+    void shouldNotUpdateScoreForFinishedGame() {
+        scoreBoard.startGame(brazil, argentina);
+        scoreBoard.updateScore(brazil, argentina, 2, 2);
+        scoreBoard.finishGame(brazil, argentina);
+
+        scoreBoard.updateScore(brazil, argentina, 3, 3);
+        assertTrue(scoreBoard.getSummary().isEmpty()); // Should stay finished
+    }
+
+    @Test
+    void shouldHandleConcurrentGameStarts() throws InterruptedException {
+        // Multi-threaded test with ConcurrentHashMap
+        ScoreBoard board = new ScoreBoard();
+        List<Team> teams = List.of(
+                new Team("A"), new Team("B"), new Team("C"), new Team("D"),
+                new Team("E"), new Team("F")
+        );
+
+        List<Thread> threads = new ArrayList<>();
+        List<Optional<Game>> results = Collections.synchronizedList(new ArrayList<>());
+
+        // Teams paired: (A,B), (C,D), (E,F)
+        for (int i = 0; i < teams.size(); i += 2) {
+            int idx = i;
+            threads.add(new Thread(() -> {
+                results.add(board.startGame(teams.get(idx), teams.get(idx+1)));
+            }));
+        }
+
+        // Start all threads nearly simultaneously
+        for (Thread t : threads) t.start();
+        for (Thread t : threads) t.join();
+
+        // Verify all games started
+        assertEquals(3, results.size());
+        results.forEach(opt -> assertTrue(opt.isPresent()));
+
+        // Verify ScoreBoard contains all matches, none with same teams
+        List<Game> allGames = board.getSummary();
+        assertEquals(3, allGames.size());
+        Set<Set<String>> pairs = new HashSet<>();
+        for (Game g : allGames) {
+            Set<String> pair = Set.of(g.getHomeTeam().getName(), g.getAwayTeam().getName());
+            assertTrue(pairs.add(pair)); // add returns false if duplicate
+        }
+    }
+
+    @Test
+    void shouldPreserveSummaryOrderWhenScoresSame() {
+        ScoreBoard board = new ScoreBoard();
+        Team a = new Team("A");
+        Team b = new Team("B");
+        Team c = new Team("C");
+        Team d = new Team("D");
+
+        Optional<Game> g1 = board.startGame(a, b); // order = 1
+        Optional<Game> g2 = board.startGame(c, d); // order = 2
+
+        assertTrue(g1.isPresent());
+        assertTrue(g2.isPresent());
+
+        board.updateScore(a, b, 3, 2); // total 5
+        board.updateScore(c, d, 4, 1); // total 5
+
+        List<Game> summary = board.getSummary();
+        assertEquals(2, summary.size());
+
+        assertEquals(g2.get(), summary.get(0));
+        assertEquals(g1.get(), summary.get(1));
     }
 }
