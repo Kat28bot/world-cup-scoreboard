@@ -1,6 +1,5 @@
-package com.example.scoreboard;
+package com.example.scoreboard.domain;
 
-import com.example.scoreboard.domain.Score;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

@@ -1,8 +1,5 @@
-package com.example.scoreboard;
+package com.example.scoreboard.domain;
 
-import com.example.scoreboard.domain.Game;
-import com.example.scoreboard.domain.ScoreBoard;
-import com.example.scoreboard.domain.Team;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
