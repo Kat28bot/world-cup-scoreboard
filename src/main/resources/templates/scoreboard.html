@@ -22,10 +22,12 @@
 <form action="/update" method="post">
     <input type="text" name="homeTeam" placeholder="Home Team" required/>
     <input type="text" name="awayTeam" placeholder="Away Team" required/>
-    <input type="number" name="homeScore" min="0" required/>
-    <input type="number" name="awayScore" min="0" required/>
+    <input type="number" name="homeScore" min="0" max="1000" required/>
+    <input type="number" name="awayScore" min="0" max="1000" required/>
     <button type="submit">Update</button>
 </form>
+<!-- Fallback message for invalid update -->
+<div style="color:red" th:if="${updateError}" th:text="${updateError}"></div>
 
 <h2>Current Games (Sorted)</h2>
 

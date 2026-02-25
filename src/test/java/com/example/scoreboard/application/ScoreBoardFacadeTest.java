@@ -15,7 +15,6 @@ class ScoreBoardFacadeTest {
 
     @BeforeEach
     void setUp() {
-         //Use a real ScoreBoard
         scoreBoard = new ScoreBoard();
         facade = new ScoreBoardFacade(scoreBoard);
     }
@@ -65,7 +64,11 @@ class ScoreBoardFacadeTest {
     void shouldUpdateAndFinishGame() {
         facade.startGame("Poland", "Germany");
 
-        facade.updateScore("Poland", "Germany", 2, 1);
+        ScoreBoardFacade.UpdateScoreResult updateResult =
+                facade.updateScore("Poland", "Germany", 2, 1);
+        assertThat(updateResult.success()).isTrue();
+        assertThat(updateResult.message()).isNull();
+
         var summary = facade.getSummary();
         assertThat(summary).hasSize(1);
         assertThat(summary.get(0).homeScore()).isEqualTo(2);

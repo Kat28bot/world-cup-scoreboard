@@ -41,17 +41,21 @@ public class ScoreBoardFacade {
         return new StartGameResult(false, "Cannot start game");
     }
 
-    public void updateScore(String homeName,
+    public UpdateScoreResult updateScore(String homeName,
                             String awayName,
                             int homeScore,
                             int awayScore) {
 
-        scoreBoard.updateScore(
-                new Team(homeName),
-                new Team(awayName),
-                homeScore,
-                awayScore
-        );
+        Team home = new Team(homeName);
+        Team away = new Team(awayName);
+
+        Game game = scoreBoard.getExistingGame(home, away);
+        if (game == null) {
+            return new UpdateScoreResult(false, "Game " + homeName + " vs " + awayName + " doesn't exist");
+        }
+
+        scoreBoard.updateScore(home, away, homeScore, awayScore);
+        return new UpdateScoreResult(true, null);
     }
 
     public void finishGame(String homeName, String awayName) {
@@ -78,8 +82,8 @@ public class ScoreBoardFacade {
     }
 
 
-    public record StartGameResult(boolean success, String message) {
-    }
+    public record StartGameResult(boolean success, String message) {}
+    public record UpdateScoreResult(boolean success, String message) {}
 
     public record GameView(
             String homeTeam,

@@ -40,13 +40,20 @@ public class ScoreBoardPageController {
         return "redirect:/";
     }
 
-
     @PostMapping("/update")
     public String update(@RequestParam String homeTeam,
                          @RequestParam String awayTeam,
                          @RequestParam int homeScore,
-                         @RequestParam int awayScore) {
-        facade.updateScore(homeTeam, awayTeam, homeScore, awayScore);
+                         @RequestParam int awayScore,
+                         RedirectAttributes redirectAttributes) {
+
+        ScoreBoardFacade.UpdateScoreResult result =
+                facade.updateScore(homeTeam, awayTeam, homeScore, awayScore);
+
+        if (!result.success()) {
+            redirectAttributes.addFlashAttribute("updateError", result.message());
+        }
+
         return "redirect:/";
     }
 

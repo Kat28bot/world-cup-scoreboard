@@ -80,7 +80,7 @@ public class ScoreBoard {
     // Helpers
     // ------------------------
 
-    private Game getExistingGame(Team home, Team away) {
+    public Game getExistingGame(Team home, Team away) {
 
         Game game = games.get(new GameKey(home, away));
 
