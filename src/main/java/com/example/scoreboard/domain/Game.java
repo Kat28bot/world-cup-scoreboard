@@ -1,6 +1,5 @@
 package com.example.scoreboard.domain;
 
-import jakarta.annotation.Nonnull;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -13,7 +12,7 @@ public class Game {
     private final long startOrder;
     private Score score;
 
-    public Game(@Nonnull Team homeTeam, @Nonnull Team awayTeam, long startOrder) {
+    public Game(@NonNull Team homeTeam, @NonNull Team awayTeam, long startOrder) {
         if (homeTeam.equals(awayTeam)) {
             throw new IllegalArgumentException("Home and Away teams cannot be the same");
         }
@@ -30,6 +29,7 @@ public class Game {
     public int totalScore() {
         return score.total();
     }
+
     @Override
     public String toString() {
         return homeTeam + " " + score.getHome() + "-" + score.getAway() + " " + awayTeam;
