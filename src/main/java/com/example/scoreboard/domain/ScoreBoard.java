@@ -16,7 +16,7 @@ public class ScoreBoard {
     private final AtomicLong sequence = new AtomicLong(0);
 
     // ------------------------
-    // Start Game
+    // ScoreBoard methods:
     // ------------------------
 
     public synchronized Optional<Game> startGame(Team home, Team away) {
@@ -42,10 +42,6 @@ public class ScoreBoard {
         return Optional.of(game);
     }
 
-    // ------------------------
-    // Update Score (atomic)
-    // ------------------------
-
     public void updateScore(Team home, Team away, int homeScore, int awayScore) {
 
         Game game = getExistingGame(home, away);
@@ -56,26 +52,17 @@ public class ScoreBoard {
         }
     }
 
-    // ------------------------
-    // Finish Game
-    // ------------------------
-
     public void finishGame(Team home, Team away) {
 
         GameKey key = new GameKey(home, away);
         Game removed = games.remove(key);
 
         if (removed == null) {
-           log.warn("Game not found: {} vs {}", home.getName(), away.getName());
-        }
-        else{
+            log.warn("Game not found: {} vs {}", home.getName(), away.getName());
+        } else {
             log.info("Game finished: {} vs {}", home.getName(), away.getName());
         }
     }
-
-    // ------------------------
-    // Summary
-    // ------------------------
 
     public List<Game> getSummary() {
 
@@ -90,7 +77,7 @@ public class ScoreBoard {
     }
 
     // ------------------------
-    // Internal Helpers
+    // Helpers
     // ------------------------
 
     private Game getExistingGame(Team home, Team away) {
@@ -116,5 +103,6 @@ public class ScoreBoard {
     // Key
     // ------------------------
 
-    private record GameKey(Team home, Team away) {}
+    private record GameKey(Team home, Team away) {
+    }
 }

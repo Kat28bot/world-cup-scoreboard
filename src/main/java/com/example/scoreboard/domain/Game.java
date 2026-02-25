@@ -19,7 +19,7 @@ public class Game {
         this.homeTeam = homeTeam;
         this.awayTeam = awayTeam;
         this.startOrder = startOrder;
-        this.score = new Score(0,0);
+        this.score = new Score(0, 0);
     }
 
     public void updateScore(int homeScore, int awayScore) {

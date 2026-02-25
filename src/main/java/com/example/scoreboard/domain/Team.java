@@ -1,18 +1,16 @@
 package com.example.scoreboard.domain;
 
-
 import lombok.Value;
-
 
 @Value
 public class Team {
-         String name;
+    String name;
 
-        public Team(String name) {
-            if (name == null) throw new NullPointerException("Team name cannot be null");
-            name = name.trim();
-            if (name.isBlank()) throw new IllegalArgumentException("Team name cannot be blank");
+    public Team(String name) {
+        if (name == null) throw new NullPointerException("Team name cannot be null");
+        name = name.trim();
+        if (name.isBlank()) throw new IllegalArgumentException("Team name cannot be blank");
 
-            this.name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
-        }
+        this.name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    }
 }

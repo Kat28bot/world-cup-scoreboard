@@ -28,7 +28,6 @@ public class ScoreBoardFacade {
             return new StartGameResult(true, null);
         }
 
-        // Determine why start failed
         if (home.equals(away)) {
             return new StartGameResult(false, "Home and Away teams cannot be the same");
         }
@@ -79,12 +78,14 @@ public class ScoreBoardFacade {
     }
 
 
-    public record StartGameResult(boolean success, String message) {}
+    public record StartGameResult(boolean success, String message) {
+    }
 
     public record GameView(
             String homeTeam,
             String awayTeam,
             int homeScore,
             int awayScore
-    ) {}
+    ) {
+    }
 }
