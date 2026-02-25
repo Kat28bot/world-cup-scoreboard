@@ -11,6 +11,7 @@ public class Team {
         name = name.trim();
         if (name.isBlank()) throw new IllegalArgumentException("Team name cannot be blank");
 
+        name = name.toLowerCase();
         this.name = Character.toUpperCase(name.charAt(0)) + name.substring(1);
     }
 }
