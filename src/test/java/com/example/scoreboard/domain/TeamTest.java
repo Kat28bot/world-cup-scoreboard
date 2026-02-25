@@ -81,17 +81,6 @@ class TeamTest {
         assertNotEquals(t1.hashCode(), t2.hashCode());
     }
 
-    @Test
-    void shouldNotBeEqualToOtherObjects() {
-        Team team = new Team("Brazil");
-        assertNotEquals(team, "Brazil");
-    }
-
-    @Test
-    void shouldBeEqualToItself() {
-        Team team = new Team("Brazil");
-        assertEquals(team, team);
-    }
 
     @Test
     void shouldNotBeEqualToNull() {

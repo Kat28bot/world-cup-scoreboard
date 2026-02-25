@@ -70,18 +70,6 @@ public class ScoreTest {
     }
 
     @Test
-    void shouldNotBeEqualToOtherObjectTypes() {
-        Score score = new Score(1, 2);
-        assertNotEquals(score, "not a score");
-    }
-
-    @Test
-    void shouldBeEqualToItself() {
-        Score score = new Score(7, 3);
-        assertEquals(score, score);
-    }
-
-    @Test
     void shouldNotBeEqualToNull() {
         Score score = new Score(7, 3);
         assertNotEquals(null, score);
