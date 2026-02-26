@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,18 +18,17 @@ public class ScoreBoard {
     // ScoreBoard methods:
     // ------------------------
 
-    public synchronized Optional<Game> startGame(Team home, Team away) {
+    public synchronized Game startGame(Team home, Team away) {
 
         if (home.equals(away)) {
-            log.warn("Cannot start game: {} vs {} - teams cannot be the same",
-                    home.getName(), away.getName());
-            return Optional.empty();
+            throw new IllegalArgumentException("Home and Away teams cannot be the same");
         }
 
-        if (isTeamPlaying(home) || isTeamPlaying(away)) {
-            log.warn("Cannot start game: {} vs {} - One of the teams is already playing",
-                    home.getName(), away.getName());
-            return Optional.empty();
+        if (isTeamPlaying(home)) {
+            throw new IllegalStateException(home.getName() + " is already playing another game");
+        }
+        if (isTeamPlaying(away)) {
+            throw new IllegalStateException(away.getName() + " is already playing another game");
         }
 
         long order = sequence.incrementAndGet();
@@ -39,17 +37,16 @@ public class ScoreBoard {
         games.put(key, game);
 
         log.info("Game started: {} vs {}", home.getName(), away.getName());
-        return Optional.of(game);
+        return game;
     }
 
     public void updateScore(Team home, Team away, int homeScore, int awayScore) {
+        Game game = getRequiredExistingGame(home, away);
+        game.updateScore(homeScore, awayScore);
 
-        Game game = getExistingGame(home, away);
-        if (game != null) {
-            game.updateScore(homeScore, awayScore);
-            log.debug("Score updated: {} vs {} -> {}:{}",
-                    home.getName(), away.getName(), homeScore, awayScore);
-        }
+        log.debug("Score updated: {} vs {} -> {}:{}",
+                home.getName(), away.getName(), homeScore, awayScore);
+
     }
 
     public void finishGame(Team home, Team away) {
@@ -58,10 +55,10 @@ public class ScoreBoard {
         Game removed = games.remove(key);
 
         if (removed == null) {
-            log.warn("Game not found: {} vs {}", home.getName(), away.getName());
-        } else {
-            log.info("Game finished: {} vs {}", home.getName(), away.getName());
+            throw new IllegalStateException("Game " + home.getName() + " vs " + away.getName() + " doesn't exist");
         }
+
+        log.info("Game finished: {} vs {}", home.getName(), away.getName());
     }
 
     public List<Game> getSummary() {
@@ -80,14 +77,11 @@ public class ScoreBoard {
     // Helpers
     // ------------------------
 
-    public Game getExistingGame(Team home, Team away) {
-
+    private Game getRequiredExistingGame(Team home, Team away) {
         Game game = games.get(new GameKey(home, away));
-
         if (game == null) {
-            log.warn("Attempted to update score for a non-existent game: {} vs {}", home.getName(), away.getName());
+            throw new IllegalStateException("Game " + home.getName() + " vs " + away.getName() + " doesn't exist");
         }
-
         return game;
     }
 

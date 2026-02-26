@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ScoreBoardFacadeTest {
 
@@ -21,53 +22,40 @@ class ScoreBoardFacadeTest {
 
     @Test
     void shouldStartGameSuccessfully() {
-        ScoreBoardFacade.StartGameResult result =
-                facade.startGame("Poland", "Germany");
-
-        assertThat(result.success()).isTrue();
-        assertThat(result.message()).isNull();
+        facade.startGame("Poland", "Germany");
+        assertThat(facade.getSummary()).hasSize(1);
     }
 
     @Test
     void shouldRejectSameTeams() {
-        ScoreBoardFacade.StartGameResult result =
-                facade.startGame("Poland", "Poland");
-
-        assertThat(result.success()).isFalse();
-        assertThat(result.message())
-                .isEqualTo("Home and Away teams cannot be the same");
+        assertThatThrownBy(() -> facade.startGame("Poland", "Poland"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Home and Away teams cannot be the same");
     }
 
     @Test
     void shouldRejectIfHomeTeamAlreadyPlaying() {
         facade.startGame("Poland", "Spain");
 
-        ScoreBoardFacade.StartGameResult result =
-                facade.startGame("Poland", "Germany");
-
-        assertThat(result.success()).isFalse();
-        assertThat(result.message()).contains("Poland is already playing");
+        assertThatThrownBy(() -> facade.startGame("Poland", "Germany"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Poland");
     }
 
     @Test
     void shouldRejectIfAwayTeamAlreadyPlaying() {
         facade.startGame("Spain", "Germany");
 
-        ScoreBoardFacade.StartGameResult result =
-                facade.startGame("Poland", "Germany");
-
-        assertThat(result.success()).isFalse();
-        assertThat(result.message()).contains("Germany is already playing");
+        assertThatThrownBy(() -> facade.startGame("Poland", "Germany"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Germany");
     }
 
     @Test
     void shouldUpdateAndFinishGame() {
         facade.startGame("Poland", "Germany");
 
-        ScoreBoardFacade.UpdateScoreResult updateResult =
-                facade.updateScore("Poland", "Germany", 2, 1);
-        assertThat(updateResult.success()).isTrue();
-        assertThat(updateResult.message()).isNull();
+        facade.updateScore("Poland", "Germany", 2, 1);
 
         var summary = facade.getSummary();
         assertThat(summary).hasSize(1);

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collections;
@@ -30,9 +29,7 @@ class ScoreBoardTest {
 
     @Test
     void shouldStartGame() {
-        Optional<Game> maybeGame = scoreBoard.startGame(brazil, argentina);
-        assertTrue(maybeGame.isPresent());
-        Game game = maybeGame.get();
+        Game game = scoreBoard.startGame(brazil, argentina);
         assertEquals(0, game.getScore().getHome());
         assertEquals(0, game.getScore().getAway());
     }
@@ -41,18 +38,13 @@ class ScoreBoardTest {
     void shouldNotStartGameIfTeamAlreadyPlaying() {
         scoreBoard.startGame(brazil, argentina);
 
-        // Attempt to start game with a team already playing
-        Optional<Game> game1 = scoreBoard.startGame(brazil, germany);
-        assertTrue(game1.isEmpty());
-
-        Optional<Game> game2 = scoreBoard.startGame(germany, argentina);
-        assertTrue(game2.isEmpty());
+        assertThrows(IllegalStateException.class, () -> scoreBoard.startGame(brazil, germany));
+        assertThrows(IllegalStateException.class, () -> scoreBoard.startGame(germany, argentina));
     }
 
     @Test
     void shouldNotStartGameWithSameTeam() {
-        Optional<Game> game = scoreBoard.startGame(brazil, brazil);
-        assertTrue(game.isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> scoreBoard.startGame(brazil, brazil));
     }
 
     @Test
@@ -86,19 +78,78 @@ class ScoreBoardTest {
     }
 
     @Test
+    void shouldNotUpdateScoreForFinishedGame() {
+        scoreBoard.startGame(brazil, argentina);
+        scoreBoard.updateScore(brazil, argentina, 2, 2);
+        scoreBoard.finishGame(brazil, argentina);
+
+        assertThrows(IllegalStateException.class, () ->
+                scoreBoard.updateScore(brazil, argentina, 3, 3));
+
+        assertTrue(scoreBoard.getSummary().isEmpty()); // still finished/removed
+    }
+    @Test
+    void tieBreakShouldBeMostRecentlyStartedNotMostRecentlyUpdated() {
+        ScoreBoard board = new ScoreBoard();
+        Team a = new Team("A");
+        Team b = new Team("B");
+        Team c = new Team("C");
+        Team d = new Team("D");
+
+        Game older = board.startGame(a, b); // startOrder = 1
+        Game newer = board.startGame(c, d); // startOrder = 2
+
+        // Make totals equal, but update the older game *after* the newer one.
+        board.updateScore(c, d, 2, 3); // total 5 (newer updated first)
+        board.updateScore(a, b, 4, 1); // total 5 (older updated later)
+
+        List<Game> summary = board.getSummary();
+        assertEquals(2, summary.size());
+
+        // Tie-break must be by start order (most recently started), not last updated.
+        assertEquals(newer, summary.get(0));
+        assertEquals(older, summary.get(1));
+    }
+
+    @Test
+    void shouldThrowWhenUpdatingNonExistentGame() {
+        Team poland = new Team("Poland");
+
+        assertThrows(IllegalStateException.class, () ->
+                scoreBoard.updateScore(poland, germany, 1, 1));
+    }
+
+    @Test
+    void shouldThrowWhenFinishingNonExistentGame() {
+        Team poland = new Team("Poland");
+
+        assertThrows(IllegalStateException.class, () ->
+                scoreBoard.finishGame(poland, germany));
+    }
+
+    @Test
+    void shouldNotAllowStartingSameMatchupTwice() {
+        Team mexico = new Team("Mexico");
+        Team canada = new Team("Canada");
+
+        scoreBoard.startGame(mexico, canada);
+
+        assertThrows(IllegalStateException.class, () ->
+                scoreBoard.startGame(mexico, canada));
+    }
+    @Test
     void shouldReturnSummaryOrderedByTotalScoreAndMostRecent() {
-        Optional<Game> maybeGame1 = scoreBoard.startGame(brazil, argentina);
-        Game game1 = maybeGame1.get();
+        Game game1 = scoreBoard.startGame(brazil, argentina);
         scoreBoard.updateScore(brazil, argentina, 2, 2); // total 4
 
         Team france = new Team("France");
-        Optional<Game> maybeGame2 = scoreBoard.startGame(germany, france);
-        Game game2 = maybeGame2.get();
+        Game game2 = scoreBoard.startGame(germany, france);
         scoreBoard.updateScore(germany, france, 3, 2); // total 5
 
-        Optional<Game> maybeGame3 = scoreBoard.startGame(new Team("Spain"), new Team("Italy"));
-        Game game3 = maybeGame3.get();
-        scoreBoard.updateScore(new Team("Spain"), new Team("Italy"), 1, 1); // total 2
+        Team spain = new Team("Spain");
+        Team italy = new Team("Italy");
+        Game game3 = scoreBoard.startGame(spain, italy);
+        scoreBoard.updateScore(spain, italy, 1, 1); // total 2
 
         List<Game> summary = scoreBoard.getSummary();
 
@@ -106,16 +157,6 @@ class ScoreBoardTest {
         assertEquals(game2, summary.get(0)); // total 5
         assertEquals(game1, summary.get(1)); // total 4
         assertEquals(game3, summary.get(2)); // total 2
-    }
-
-    @Test
-    void shouldNotUpdateScoreForFinishedGame() {
-        scoreBoard.startGame(brazil, argentina);
-        scoreBoard.updateScore(brazil, argentina, 2, 2);
-        scoreBoard.finishGame(brazil, argentina);
-
-        scoreBoard.updateScore(brazil, argentina, 3, 3);
-        assertTrue(scoreBoard.getSummary().isEmpty()); // Should stay finished
     }
 
     @Test
@@ -128,27 +169,22 @@ class ScoreBoardTest {
         );
 
         List<Thread> threads = new ArrayList<>();
-        List<Optional<Game>> results = Collections.synchronizedList(new ArrayList<>());
+        List<Game> results = Collections.synchronizedList(new ArrayList<>());
 
         // Teams paired: (A,B), (C,D), (E,F)
         for (int i = 0; i < teams.size(); i += 2) {
             int idx = i;
-            threads.add(new Thread(() -> {
-                results.add(board.startGame(teams.get(idx), teams.get(idx+1)));
-            }));
+            threads.add(new Thread(() -> results.add(board.startGame(teams.get(idx), teams.get(idx + 1)))));
         }
 
-        // Start all threads nearly simultaneously
         for (Thread t : threads) t.start();
         for (Thread t : threads) t.join();
 
-        // Verify all games started
         assertEquals(3, results.size());
-        results.forEach(opt -> assertTrue(opt.isPresent()));
 
-        // Verify ScoreBoard contains all matches, none with same teams
         List<Game> allGames = board.getSummary();
         assertEquals(3, allGames.size());
+
         Set<Set<String>> pairs = new HashSet<>();
         for (Game g : allGames) {
             Set<String> pair = Set.of(g.getHomeTeam().getName(), g.getAwayTeam().getName());
@@ -164,11 +200,8 @@ class ScoreBoardTest {
         Team c = new Team("C");
         Team d = new Team("D");
 
-        Optional<Game> g1 = board.startGame(a, b); // order = 1
-        Optional<Game> g2 = board.startGame(c, d); // order = 2
-
-        assertTrue(g1.isPresent());
-        assertTrue(g2.isPresent());
+        Game g1 = board.startGame(a, b); // order = 1
+        Game g2 = board.startGame(c, d); // order = 2
 
         board.updateScore(a, b, 3, 2); // total 5
         board.updateScore(c, d, 4, 1); // total 5
@@ -176,7 +209,8 @@ class ScoreBoardTest {
         List<Game> summary = board.getSummary();
         assertEquals(2, summary.size());
 
-        assertEquals(g2.get(), summary.get(0));
-        assertEquals(g1.get(), summary.get(1));
+        assertEquals(g2, summary.get(0));
+        assertEquals(g1, summary.get(1));
     }
+
 }

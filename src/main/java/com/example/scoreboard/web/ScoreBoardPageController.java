@@ -20,9 +20,13 @@ public class ScoreBoardPageController {
 
     @GetMapping("/")
     public String view(Model model,
-                       @ModelAttribute("startError") String startError) {
+                       @ModelAttribute("startError") String startError,
+                       @ModelAttribute("updateError") String updateError,
+                       @ModelAttribute("finishError") String finishError) {
         model.addAttribute("games", facade.getSummary());
-        model.addAttribute("startError", startError); // display fallback message if any
+        model.addAttribute("startError", startError);
+        model.addAttribute("updateError", updateError);
+        model.addAttribute("finishError", finishError);
         return "scoreboard";
     }
 
@@ -31,10 +35,10 @@ public class ScoreBoardPageController {
                         @RequestParam String awayTeam,
                         RedirectAttributes redirect) {
 
-        ScoreBoardFacade.StartGameResult result = facade.startGame(homeTeam, awayTeam);
-
-        if (!result.success()) {
-            redirect.addFlashAttribute("startError", result.message());
+        try {
+            facade.startGame(homeTeam, awayTeam);
+        } catch (RuntimeException ex) {
+            redirect.addFlashAttribute("startError", ex.getMessage());
         }
 
         return "redirect:/";
@@ -47,11 +51,10 @@ public class ScoreBoardPageController {
                          @RequestParam int awayScore,
                          RedirectAttributes redirectAttributes) {
 
-        ScoreBoardFacade.UpdateScoreResult result =
-                facade.updateScore(homeTeam, awayTeam, homeScore, awayScore);
-
-        if (!result.success()) {
-            redirectAttributes.addFlashAttribute("updateError", result.message());
+        try {
+            facade.updateScore(homeTeam, awayTeam, homeScore, awayScore);
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("updateError", ex.getMessage());
         }
 
         return "redirect:/";
@@ -59,8 +62,13 @@ public class ScoreBoardPageController {
 
     @PostMapping("/finish")
     public String finish(@RequestParam String homeTeam,
-                         @RequestParam String awayTeam) {
-        facade.finishGame(homeTeam, awayTeam);
+                         @RequestParam String awayTeam,
+                         RedirectAttributes redirect) {
+        try {
+            facade.finishGame(homeTeam, awayTeam);
+        } catch (RuntimeException ex) {
+            redirect.addFlashAttribute("finishError", ex.getMessage());
+        }
         return "redirect:/";
     }
 }
