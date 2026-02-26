@@ -19,17 +19,7 @@ public class ScoreBoard {
     // ------------------------
 
     public synchronized Game startGame(Team home, Team away) {
-
-        if (home.equals(away)) {
-            throw new IllegalArgumentException("Home and Away teams cannot be the same");
-        }
-
-        if (isTeamPlaying(home)) {
-            throw new IllegalStateException(home.getName() + " is already playing another game");
-        }
-        if (isTeamPlaying(away)) {
-            throw new IllegalStateException(away.getName() + " is already playing another game");
-        }
+        validateTeams(home, away);
 
         long order = sequence.incrementAndGet();
         Game game = new Game(home, away, order);
@@ -38,6 +28,20 @@ public class ScoreBoard {
 
         log.info("Game started: {} vs {}", home.getName(), away.getName());
         return game;
+    }
+
+    private void validateTeams(Team home, Team away) {
+        if (home.equals(away)) {
+            throw new IllegalArgumentException("Home and Away teams cannot be the same");
+        }
+
+        if (isTeamCurrentlyPlaying(home)) {
+            throw new IllegalStateException(home.getName() + " is already playing another game");
+        }
+
+        if (isTeamCurrentlyPlaying(away)) {
+            throw new IllegalStateException(away.getName() + " is already playing another game");
+        }
     }
 
     public void updateScore(Team home, Team away, int homeScore, int awayScore) {
@@ -85,7 +89,7 @@ public class ScoreBoard {
         return game;
     }
 
-    public boolean isTeamPlaying(Team team) {
+    public boolean isTeamCurrentlyPlaying(Team team) {
 
         return games.values().stream()
                 .anyMatch(g ->
