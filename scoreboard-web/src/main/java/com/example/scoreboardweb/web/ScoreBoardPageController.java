@@ -31,8 +31,8 @@ public class ScoreBoardPageController {
     }
 
     @PostMapping("/start")
-    public String start(@RequestParam String homeTeam,
-                        @RequestParam String awayTeam,
+    public String start(@RequestParam("homeTeam") String homeTeam,
+                        @RequestParam("awayTeam") String awayTeam,
                         RedirectAttributes redirect) {
 
         try {
@@ -45,10 +45,10 @@ public class ScoreBoardPageController {
     }
 
     @PostMapping("/update")
-    public String update(@RequestParam String homeTeam,
-                         @RequestParam String awayTeam,
-                         @RequestParam int homeScore,
-                         @RequestParam int awayScore,
+    public String update(@RequestParam("homeTeam") String homeTeam,
+                         @RequestParam("awayTeam") String awayTeam,
+                         @RequestParam("homeScore") int homeScore,
+                         @RequestParam("awayScore") int awayScore,
                          RedirectAttributes redirectAttributes) {
 
         try {
@@ -61,8 +61,8 @@ public class ScoreBoardPageController {
     }
 
     @PostMapping("/finish")
-    public String finish(@RequestParam String homeTeam,
-                         @RequestParam String awayTeam,
+    public String finish(@RequestParam("homeTeam") String homeTeam,
+                         @RequestParam("awayTeam") String awayTeam,
                          RedirectAttributes redirect) {
         try {
             facade.finishGame(homeTeam, awayTeam);
